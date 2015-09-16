@@ -70,7 +70,7 @@ def load_mnist(dataset='mnist.pkl.gz'):
     return rval
 
 
-def create_model_tr(x, y):
+def create_model_tr(x):
     # parameter theta
     M, K = 784, 10
     w = shared(np.zeros((M, K), 'float32'),
@@ -92,22 +92,20 @@ def create_loss(F, y):
 
 
 def train(itMax=100, szBatch=256):
-    # feed data
     print 'loading data...'
     dataTr, dataVa, dataTe = load_mnist()
 
-    # build the graph
     print 'building the graph...'
     # fprop
     x, y = T.matrix('x', 'float32'), T.ivector('y')
-    F, theta = create_model_tr(x, y)
+    F, theta = create_model_tr(x)
     ell = create_loss(F, y)
     # bprop
     dtheta = T.grad(ell, theta)
 
     # SGD optimization with mini-batch
     def get_batch(iBatch, data):
-        return data[iBatch*szBatch : (iBatch+1)*szBatch]
+        return data[iBatch*szBatch:(iBatch+1)*szBatch]
 
     def update_theta(theta, dtheta, lr=np.float32(0.1)):
         return [(a, a - lr*d) for (a, d) in zip(theta, dtheta)]
@@ -124,7 +122,6 @@ def train(itMax=100, szBatch=256):
         }
     )
 
-    # fire it
     print 'begin training...'
     trLoss = []
     for i in xrange(itMax):
