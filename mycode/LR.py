@@ -91,7 +91,7 @@ def create_loss(F, y):
     return ell
 
 
-def train(itMax=100, szBatch=256):
+def train(itMax=100, szBatch=256, lr=0.01):
     print 'loading data...'
     dataTr, dataVa, dataTe = load_mnist()
 
@@ -122,15 +122,67 @@ def train(itMax=100, szBatch=256):
         }
     )
 
-    print 'begin training...'
+    print 'Fire the graph...'
     trLoss = []
+    N = dataTr[0].get_value(borrow=True).shape[0]
+    numBatch = N / szBatch
+    print '#batch = %d' % (numBatch,)
     for i in xrange(itMax):
-        tmpLoss = f_graph(i)
-        print 'iteration %d, loss = %6.5f' % (i, tmpLoss)
+        ibat = i % numBatch
+        tmpLoss = f_graph(ibat)
+        print 'iteration %d, ibat = %d, loss = %6.5f' % (i, ibat, tmpLoss)
         trLoss.append(tmpLoss)
     import matplotlib.pyplot as plt
     plt.plot(range(1, len(trLoss)+1), trLoss, 'ro-')
     plt.show(block=True)
 
+    # return the results
+    return [each.get_value() for each in theta]
+
+
+def create_model_te(x, theta):
+    # parameters
+    w = shared(theta[0], name='w', borrow=True)
+    b = shared(theta[1], name='b', borrow=True)
+
+    return T.dot(x, w) + b
+
+
+def create_loss_zeroone(F, y):
+    yhat = T.argmax(F, axis=1)
+    return T.mean(T.neq(yhat, y))
+
+
+def test(theta):
+    print 'loading data...'
+    dataTr, dataVa, dataTe = load_mnist()
+
+    print 'building the graph...'
+    # fprop
+    x = T.matrix('x', 'float32')
+    F = create_model_te(x, theta)
+    # zero-one loss
+    y = T.ivector('y')
+    ell = create_loss_zeroone(F, y)
+    # all in one graph
+    f_graph = function(
+        inputs=[],
+        outputs=ell,
+        givens={x: dataTe[0], y: dataTe[1]}
+    )
+
+    print 'fire the graph...'
+    er = f_graph()
+    print 'error rate = %5.4f' % (er,)
+
+
 if __name__ == '__main__':
-    train()
+    # config
+    itMax = 195*2
+    szBatch = 256
+
+    print 'Training...'
+    theta = train(itMax=itMax, szBatch=szBatch)
+
+    print 'Testing...'
+    test(theta)
