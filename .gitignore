@@ -13,3 +13,4 @@ html
 *.pyc
 *~
 *.swp
+/.idea/workspace.xml
