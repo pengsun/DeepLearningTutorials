@@ -4,8 +4,30 @@ from theano import tensor as T, function, shared
 
 rng = np.random.RandomState(1234)
 
+
+def init_theta_fc():
+    szAll = [(256, 128), (128, 10)]
+    tmp = []
+    for sz in szAll:
+        tmp.append(
+            np.asarray(
+                rng.uniform(
+                    low=-np.sqrt(6. / (sz[0] + sz[1])),
+                    high=np.sqrt(6. / (sz[0] + sz[1])),
+                    size=sz
+                ),
+                dtype='float32'
+            )
+        )
+        tmp.append(np.zeros((sz[1],), 'float32'))
+    sh_theta = []
+    for each in tmp:
+        sh_theta.append(shared(each, borrow=True))
+    return sh_theta
+
+
 def init_theta():
-    szAll = [(784, 512), (512, 256), (256, 10)]
+    sz_flt = [(16, 1, 5, 5), (16, 16, 5, 5) ]
     tmp = []
     for sz in szAll:
         tmp.append(
