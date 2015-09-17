@@ -13,4 +13,6 @@ html
 *.pyc
 *~
 *.swp
-/.idea/workspace.xml
+/.idea/*.xml
+/.idea/.name
+/.idea/DeepLearningTutorials-Peng.iml
