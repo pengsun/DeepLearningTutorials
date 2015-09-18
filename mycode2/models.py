@@ -29,7 +29,7 @@ def create_mlp(x, theta):
     return F[-1]
 
 
-def create_convpool(x, theta, sz_pool):
+def create_conv_pool_tanh(x, theta, sz_pool):
     w, b = theta
 
     # convolve input feature maps with filters

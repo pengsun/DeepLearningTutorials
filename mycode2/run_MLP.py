@@ -1,4 +1,4 @@
-import dataset, models, loss, optim
+import dataset, models, loss, optim, params_init
 import numpy as np
 from theano import tensor as T, function, shared
 
@@ -10,36 +10,24 @@ def create_mlp():
     x = T.matrix('x')
 
     # hidden layer I
-    sz1 = (784, 512)
-    w1 = shared(
-        np.asarray(rng.uniform(low=-1, high=1, size=sz1), 'float32'),
-        borrow=True)
-    b1 = shared(
-        np.zeros((sz1[1],), 'float32'),
-        borrow=True
-    )
-    a1 = models.create_linear_sigmoid(x, (w1, b1))
+    sz1_i, sz1_o = 784, 512
+    theta1 = [shared(tmp, borrow=True)
+              for tmp in params_init.for_matrix(sz1_i, sz1_o, rng=rng)]
+    a1 = models.create_linear_sigmoid(x, theta1)
 
     # hidden layer II
-    sz2 = (512, 256)
-    w2 = shared(
-        np.asarray(rng.uniform(low=-1, high=1, size=sz2), 'float32'),
-        borrow=True
-    )
-    b2 = shared(
-        np.zeros((sz2[1],), 'float32'),
-        borrow=True
-    )
-    a2 = models.create_linear_sigmoid(a1, (w2, b2))
+    sz2_i, sz2_o = 512, 256
+    theta2 = [shared(tmp, borrow=True)
+              for tmp in params_init.for_matrix(sz2_i, sz2_o, rng=rng)]
+    a2 = models.create_linear_sigmoid(a1, theta2)
 
     # output layer
-    sz3 = (256, 10)
-    tmp = rng.uniform(low=-1, high=1, size=(256, 10))
-    w3 = shared(np.asarray(tmp, 'float32'), borrow=True)
-    b3 = shared(np.zeros((sz3[1],), 'float32'), borrow=True)
-    f = models.create_linear(a2, (w3, b3))
+    sz3_i, sz3_o = 256, 10
+    theta3 = [shared(tmp, borrow=True)
+              for tmp in params_init.for_matrix(sz3_i, sz3_o, rng=rng)]
+    a3 = models.create_linear_sigmoid(a2, theta3)
 
-    return x, f, (w1, b1, w2, b2, w3, b3)
+    return x, a3, theta1 + theta2 + theta3
 
 
 if __name__ == '__main__':
