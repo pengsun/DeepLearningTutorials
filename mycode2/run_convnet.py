@@ -9,16 +9,6 @@ config.floatX = 'float32'
 rng = np.random.RandomState(1234)
 
 
-# def data_load():
-#     data = dataset.load(name='mnist.pkl.gz')
-#
-#     def make_featuremap(xx):
-#         n = xx.shape[0]
-#         return T.reshape(xx, (n, 1, 28, 28))
-#
-#     return [(make_featuremap(each[0]), each[1]) for each in data]
-
-
 def create_convnet():
     # input
     a0 = T.matrix('x')
