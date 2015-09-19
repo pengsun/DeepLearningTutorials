@@ -4,6 +4,7 @@ from theano.tensor.signal import downsample
 from theano.tensor.nnet import conv
 
 
+
 def create_linear(x, theta):
     w, b = theta[0], theta[1]
     F = T.dot(x, w) + b
@@ -43,3 +44,12 @@ def create_conv_pool_tanh(x, theta, sz_pool):
     # thus be broadcasted across mini-batches and feature map
     # width & height
     return T.tanh(aa + b.dimshuffle('x', 0, 'x', 'x'))
+
+
+def create_dropout(x, trng=None):
+    if trng is not None:  # training
+        msk = trng.binomial(size=x.shape, p=0.5)
+        a = msk * x
+    else:
+        a = 0.5 * x
+    return a

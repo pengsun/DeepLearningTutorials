@@ -3,10 +3,16 @@ import numpy as np
 from theano import tensor as T, function as graph_mgr, shared
 
 
-def dft_mo_create():
+def dft_pa_init():
     n_in, n_out = 784, 10
     w = shared(np.zeros((n_in, n_out), 'float32'), borrow=True)
     b = shared(np.zeros((n_out,), 'float32'), borrow=True)
+    return w, b
+
+
+def dft_mo_create(theta, is_tr=True):
+    # the parameters
+    w, b = theta[0], theta[1]
 
     # the dag model: simple linear model
     x = T.matrix('x', 'float32')
@@ -24,14 +30,17 @@ def dft_data_load():
 
 
 def train(itMax=100, szBatch=256, lr=0.01, vaFreq=10,
-          mo_create=models.create_mlp,
+          pa_init=dft_pa_init,
+          mo_create=dft_mo_create,
           data_load=dft_data_load):
     print 'loading data...'
     dataTr, dataVa, _ = data_load()
 
     print 'building graph...'
+    # initialize parameters
+    theta = pa_init()
     # fprop: the prediction model for MLP
-    x, F, theta = mo_create()
+    x, F = mo_create(theta, is_tr=True)
     # fprop: the loss
     y = T.ivector('y')
     ell = loss.create_logistic(F, y)
@@ -59,7 +68,6 @@ def train(itMax=100, szBatch=256, lr=0.01, vaFreq=10,
         }
     )
 
-
     print 'Fire the graph...'
     trLoss, er_va = [], []
     N = dataTr[0].get_value(borrow=True).shape[0]
@@ -83,15 +91,15 @@ def train(itMax=100, szBatch=256, lr=0.01, vaFreq=10,
     plt.plot([i*vaFreq for i in range(len(er_va))], er_va, 'bx-')
     plt.show(block=True)
     # return the parameters
-    return (x, F, theta)
+    return theta
 
 
-def test(mo, data_load=dft_data_load):
+def test(theta, mo_create=dft_mo_create, data_load=dft_data_load):
     print 'loading data...'
     _, _, dataTe = data_load()
 
     print 'building the graph...'
-    x, f, theta = mo
+    x, f = mo_create(theta, is_tr=False)
     # fprop zero-one loss
     y = T.ivector('y')
     ell = loss.create_zeroone(f, y)
@@ -108,15 +116,17 @@ def test(mo, data_load=dft_data_load):
 
 
 def run(itMax=195*2, szBatch=256, lr=0.1, vaFreq=20,
+        pa_init=dft_pa_init,
         mo_create=models.create_mlp,
         data_load=dft_data_load):
     print 'Training...'
-    mo = train(itMax=itMax, szBatch=szBatch, lr=lr, vaFreq=vaFreq,
-               mo_create=mo_create,
-               data_load=data_load)
+    theta = train(itMax=itMax, szBatch=szBatch, lr=lr, vaFreq=vaFreq,
+                  pa_init=pa_init,
+                  mo_create=mo_create,
+                  data_load=data_load)
 
     print 'Testing...'
-    test(mo)
+    test(theta, mo_create=mo_create, data_load=data_load)
 
 
 if __name__ == '__main__':
